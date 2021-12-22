@@ -1,0 +1,152 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+
+\usepackage[slovak]{babel}
+\usepackage[a4paper,top=1.75cm,bottom=1.75cm,left=2.5cm,right=2.5cm,marginparwidth=1.75cm]{geometry}
+
+% Useful packages
+\usepackage{multicol}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage[colorlinks=true, allcolors=blue]{hyperref}
+\parindent=0in
+\parskip=7pt
+
+
+\title{Binárna Klasifikácia pomocou LP}
+\author{Dávid Daniš, Michal Chymo, Maximilián Zivák, Adam Chrenko}
+\date{December 2021}
+
+\begin{document}
+
+\maketitle
+
+\section{Popis problému}
+TODO
+\section{Dôkaz ekvivalencie}
+Ak $\forall x,y$ $\exists a,b$ také, že:
+\begin{align*}
+    a^Tx - b &>0\\
+    a^Ty - b &<0\\
+\end{align*}
+Potom:
+\begin{align*}
+&nech \: R \: = \{(a^Tx-b) \; | \; x \in X\} \\
+&nech \: F \: = \{-(a^Ty-b) \; | \; y \in Y\} \\
+&nech \: k = \frac{1}{minimum(F \cup R)} \qquad kde\: 1\: je\: ľubovolná\: konštanta
+\end{align*}
+Z definície k vieme, že $k > 0$ a platí:
+\begin{align*}
+    k(a^Tx-b) &\geq 1 \qquad &x \in X\\
+    k(a^Ty-b) &\leq -1 \qquad &y \in Y
+\end{align*}
+Dôkaz že predošlé dva riadky platia nechávame ako cvičenie pre čitateľa.\\
+Z čoho vyplýva, že existujú $a' = ka$, $b' = kb$ také, že:
+\[a'^Tx - b' &\geq 1 \]
+\[a'^Ty - b' &\leq -1\]
+
+\section{Konštantná účelová funkcia}
+Vyberme $\Vec{a}$, ${b}$ tak, že 
+\[\Vec{a}^T \Vec{x_i} - {b} \geq 1, \quad \forall i \in {1,2,3 \ldots N} \qquad \Vec{a}^T \Vec{y_i} - {b} \leq -1, \quad \forall i \in {1,2,3 \ldots M}\] 
+
+
+Toto potrebujeme dostať do tvaru úlohy LP, tak že
+\[\min_{\Vec{p}} \Vec{c} ^ T \Vec{p}\]
+\[A_{ub} \Vec{p} \leq \Vec{b}_{ub}\]
+\[kde \quad \Vec{p} = [a_1,a_2 \ldots a_{n}, b]^T\]
+
+
+Za $\Vec{c}$ si dosadíme $\Vec{0}$ a teda účelovú funkciu môžeme zatial ignorovať.
+\\
+Zároveň skalár $\mathbf{b}$ je niekoľkými krokmi možné "skryť" do  vektorov $\mathb{x_i,\space y_i} \, \forall i \in {1,2,3 \ldots N=M}$ a teda do matice $\mathbf{A_{ub}}$.\\ Do vektorov $x_i, y_i$ pridáme na koniec matice riadok samých -1, tieto matice označíme $\mathbf{X', Y'}$. Potom tieto matice transponujeme, čiže výsledok úlohy LP bude vektor, pre ktorý platí $\mathbf{|v| = n + 1}$ kde $n+1$ hodnota určí hodnodu skaláru $\mathbf{b}$ a prvých n hodnôt určí koeficienty hľadaného vektora $\Vec{a}$.\\
+
+
+Úlohu potrebujeme dostať do štandardizovaného tvaru pre počítanie na PC: $LHS \leq RHS$.\\
+Takže maticu $\mathbf{X'}$ prenásobíme -1 a za vektor $\mathbf{b}$ dosadiť samé -1. Tieto 2 matice ($\mathbf{X', Y'}$) spojíme do jednej nasledovne:
+\[A_{ub} = \left[\frac{-X'^T}{Y'^T}\right] \qquad b_{ub} = (-1 \ldots -1)^T\]
+\[-X'^T = 
+\begin{bmatrix}
+-x_{1,1} & -x_{1,2} & \ldots &-x_{1,50} &1\\
+-x_{2,1} & -x_{2,2} & \ldots &-x_{2,50} &1\\
+\vdots&\vdots &  \ddots & \vdots &  \vdots \\
+-x_{50,1} & -x_{50,2} & \ldots& -x_{50,50} &1 
+\end{bmatrix}
+\qquad
+Y'^T=
+\begin{bmatrix}
+y_{1,1} & y_{1,2} & \ldots &y_{1,50} &-1\\
+y_{2,1} & y_{2,2} & \ldots &y_{2,50} &-1\\
+\vdots&\vdots &  \ddots & \vdots & \vdots\\
+y_{50,1} & y_{50,2} & \ldots& y_{50,50} & -1
+\end{bmatrix}
+\]
+Úlohu v tomto tvare je možné dosadiť do vášho obľúbeného programu na riešenie lineárnej optimalizácie. (SciPy, MatLab \ldots).
+\[A_{ub} * [a_1,a_2 \ldots a_{n}, b]^T \leq \Vec{b}_{ub}\]
+Toto riešenie porovnáme pri použití  \href{https://github.com/adam-213/LinPro2021/blob/main/Results/ZeroObjectiveFunc.txt}{rôznych metód}
+
+
+\section{L1 norma}
+
+LP s nulovou účelovou funkciou nájde ľubuvolnú nadrovinu. Chceli by sme ale odstrániť nesignifikantné parametre. Ak účelovú funkciu zameníme za $L_1$ normu $\Vec{a}$, dostaneme riešenie s veľkým počtom nulových zložiek. Nový problém LP je tvaru:
+\\
+\[\min_a ||a||_1\]
+\[A_{ub} * \Vec{p} \leq \Vec{b}_{ub}\]
+\[kde \quad \Vec{p} = [a_1,a_2 \ldots a_{n}, b]^T\]
+\\
+Čo je:
+\\
+\[\min_a \sum_{i=1}^{n}{|a_i|}\]
+\[A_{ub} * \Vec{p} \leq \Vec{b}_{ub}\]
+\\
+Keďže účelová funkcia LP v štandardnom tvare musí byť lineárna, odstránime absolútnu hodnotu štandardným spôsobom pomocou novej premennej $\Vec{t}$
+
+ \[\min_a \sum_{i=1}^{n}{|a_i|} \quad \xrightarrow[]{} \quad \min_t \sum_{i=1}^{n}{t_i}\]
+
+\[-t_i \leq a_i \leq t_i \quad i \in \left\{ 1, 2, ..., n\right\}, \quad t_i \in \left[0,\infty\right)\]
+\[-t_i \leq a_i \quad a_i \leq t_i\]
+\begin{align*}
+-I_n a - I_n t &\leq \Vec{0}\\
+I_n a - I_n t &\leq \Vec{0}
+\end{align*}
+\newline\newline\newline\newline
+A teda nová úloha LP je:
+
+\begin{align*}
+\min_t \sum_{i=1}^{n}{t_i} &= \Vec{1}_n^T * \Vec{t}\\
+A_{ub} * \Vec{p} &\leq \Vec{b}_{ub}\\
+-I_n a - I_n t &\leq \Vec{0}_n\\
+I_na - I_nt &\leq \Vec{0}_n\\ 
+\end{align*}
+
+
+Na prepísanie do formy s jedným vektorom neznámich a jednou maticou musíme spraviť pár úprav. Chceli by sme aby hodnoty $a_i$ a $b$ neovplyňovali hodnotu účelovej funkcie, čiže je nutné dosadiť za ich koeficienty nuly, zárovneň potrebujeme aby $t_i$(čo sú nové neznáme) všetky prispievali rovným dielom.\\
+Maticu A je nutné rozšíriť o nulové a jednotkové matice, aby sme zachovali dimenzie, keďže chceme aby nám po násobení matice a vektoru vyšiel vektor dĺžky $k + 2n$. \\Pravú stranu nerovnice musíme upraviť podobným spôsobom, tentokrát to dosiahneme rozšírením vektoru na pravej strane, nulovým vektorom dĺžky $2n$.Týmito úpravami docielimi toho, že LP nájde vektor ktorého prvých $n$ členov je hľadaný vektor, a $n+1$ člen je hľadaný skalár, ostatné prvky vektoru ignorujeme.
+\\
+\[\min_y q^T y \]
+\[q = [0_1,0_2 \ldots 0_{n+1}|1_1, 1_2 \ldots 1_{n}] \qquad 
+\qquad y = [a_1,a_2\ldots,a_{n}|b|t_1, t_2 \ldots t_{n}]\]
+\[
+\begin{bmatrix}
+A_{k,n} & -\Vec{1}_k & -0_{k,n}\\ 
+I_{n,n} & -\Vec{0}_k & -I_{n,n} \\ 
+-I_{n,n} & -\Vec{0}_k & -I_{n,n}
+\end{bmatrix}
+*
+\begin{bmatrix}
+a_1\\ \vdots \\a_n \\ \hline  b \\ \hline t_1\\\vdots \\t_n
+\end{bmatrix}
+\leq
+\begin{bmatrix}
+-1_1\\ \vdots \\-1_k \\ \hline 0_1 \\\vdots \\ 0_{2n} 
+\end{bmatrix}
+\qquad k = N + M\]
+Kde $A_{k,n}$ je $A_{ub}$ bez posledného stĺpca.\\
+V tejto forme je možné nerovnicu dosadiť do $<Algoritmu>$ na riešenie problémov LP.
+\\
+
+Z vačsiny \href{https://github.com/adam-213/LinPro2021/blob/main/Results/L1_norm.txt}{Algoritmov} sa dozvieme, že viac ako polovica "parametrov(features)" je nesignifikantných. ($\leq \epsilon$)
+\section{Využitia Binárnej Klasifikácie}
+TODO
+\section{Bonus}
+TODO?
+\end{document}
