@@ -7,7 +7,9 @@
 % Useful packages
 \usepackage{multicol}
 \usepackage{amsmath}
+\usepackage{subfig}
 \usepackage{graphicx}
+\usepackage{hyperref}
 \usepackage[colorlinks=true, allcolors=blue]{hyperref}
 \parindent=0in
 \parskip=7pt
@@ -177,7 +179,88 @@ Z vačsiny \href{https://github.com/adam-213/LinPro2021/blob/main/Results/L1_nor
     \begin{itemize}
         \item multiKlasifikátor robí presne to, čo napovedá názov - klasifikuje viac ako 2 "triedy". Tento klasifikátor je tak zvaná heuristika na rozdelenie problému s viacerými triedami do viac problémov s dvoma triedami, na ktoré je potom možné aplikovať metódy a algoritmy binárnej klasifikácie.
         \item OnevsRest - Tak zvaný naivný prístup - Buď si to čo hľadám alebo nie, všetky "triedy", sú zlúčené do rest porcie. Takto sa pozrieme na každú triedu a vyberieme ten z najlepším skóre. 
-        \item OnevsOne - Veľkostne zložitý model - pre každý pár je nutné vytvoriť nový model. Počet týchto modelov rastie kvadraticky od počtu "tried". Zároveň ale veľmi rýchly, jednotlivé klasifikácie zaberajú len veľmi málo času. TMTO v akcii.
+        \item OnevsOne - Veľkostne zložitý model - pre každý pár je nutné vytvoriť nový model. Počet týchto modelov rastie kvadraticky od počtu "tried". Zároveň ale veľmi rýchly, jednotlivé klasifikácie zaberajú len veľmi málo času. 
     \end{itemize}
 \end{itemize}
+\\\\\\\\\\\\\\\
+\\\\\\\\\\\\\\\
+\\\\\\\\\\\\\\\
+\section{Nadstavba - Reálne Dáta}
+\href{https://archive.ics.uci.edu/ml/datasets/banknote+authentication}{Dáta} boli vybrané z odporúčaného zdroja, Téma je klasifikácia falošnosti Euro bankoviek na základe 4 parametrov získaných z bankovky. Dáta boli rozdelené na training a test set v pomere 75/25\%
+\subsection{"Konštantná" účelová funkcia}
+X = Pravé bankovky, Y = falošné bankovky - Obe z training setu\\
+Keďže si nie sme istý či dáta sú separovatelné musíme pridať 2 ďalšie premenné, ktoré túto separáciu umožnia. S týmito premennými bude úloha vždy riešitená, ak tieto premenné budú dosť veľké. Ale čím vačsie sú tieto premenné tým horšiu separáciu budeme mať. Z tohto dôvodu by sme ich chceli minimalizovať. Preto upravíme účelovú funkciu na
+\[\min_{u,v} \sum_{i=1}^{N}{u_i} + \sum_{i=1}^{M}{v_i}\]
+
+Budeme musieť tak tiež upraviť ohraničenia tak aby ich bolo možné dosadiť do algoritmu, na to je potrebné použiť postup z 3 kapitoly.
+
+Z toho dostaneme, že úloha vyzerá nasledovne
+\[\begin{bmatrix}
+-X_{|a|,|X|} & \Vec{1} & I_{|X|} & \mathb{0_{|Y|,|X|}} \\
+Y_{|a|,|Y|} & \Vec{-1} & \mathb{0_{|X|,|Y|}} & I_{|Y|}
+\end{bmatrix}
+* 
+\begin{bmatrix}
+a_1 \\ \vdots \\ a_4 \\ \hline
+ b \\ \hline
+ u_1 \\ \vdots \\ u_{|X|} \\ \hline
+ v_1 \\ \vdots \\ v_{|Y|}
+\end{bmatrix}
+\leq
+\begin{bmatrix}
+\Vec{0}_{|a|} \\ \hline 0 \\ \hline \Vec{-1}_{|X|} \\ \hline \Vec{-1}_{|Y|}
+\end{bmatrix}\]
+
+Po dosadení tejto úlohy do viacerých algoritmov, dostávame prakticky rovnaké výsledky pre vektor $\Vec{a}$ a skalár b.
+
+Po otestovaní na sade dát, ktorá bola na to odložená dostávame presnosť klasifikácie \approx 92.71\%
+\subsection{L1 norma}
+Pre použitie L1 normy je nutné znova predchádzajúcu maticu pretransformovať z pomocou štandardných techník na odstraňovanie L1 noriem. Postupom podobným posutupu využitému v Kapitole 4
+dostávame účelovu funkciu \[\min_{u,v} \sum_{i=1}^{N}{u_i} + \sum_{i=1}^{M}{v_i} + \mu||a_i||_1\]
+
+
+a obrovskú maticu v tvare:
+\[
+\begin{bmatrix}
+-X_{|a|,|X|} & \Vec{1} & 0_{|a|,|X|} & I_{|X|} & \mathb{0_{|Y|,|X|}} \\
+Y_{|a|,|Y|} & \Vec{-1} & 0_{|a|,|Y|} & \mathb{0_{|X|,|Y|}} & I_{|Y|} \\
+I_{|a|} & \Vec{0} & -I_{|a|} & \mathb{0_{|a|,|X|}} & \mathb{0_{|a|,|Y|}} \\ 
+-I_{|a|} & \Vec{0} & -I_{|a|} & \mathb{0_{|a|,|X|}} & \mathb{0_{|a|,|Y|}} \\
+\end{bmatrix}
+ * 
+ \begin{bmatrix}
+a_1 \\ \vdots \\ a_4 \\ \hline
+ b \\ \hline
+ \mu t_1 \\ \vdots \\ \mu t_4 \\ \hline
+ u_1 \\ \vdots \\ u_{|X|} \\ \hline
+ v_1 \\ \vdots \\ v_{|Y|}
+\end{bmatrix}
+=
+\begin{bmatrix}
+\Vec{0}_{|a|} \\ \hline 0 \\ \hline \Vec{-1}_{|X|} \\ \hline \Vec{-1}_{|Y|} \\ \hline 0_1 \\ \vdots \\ 0_{2|a|}
+\end{bmatrix}\]
+
+Po dosadení tejto úlohy do viacerých algoritmov, dostávame prakticky rovnaké výsledky pre vektor $\Vec{a}$ a skalár b.
+
+Po otestovaní na sade dát, ktorá bola na to odložená dostávame presnosť klasifikácie $\approx 99.75\%$\\\\
+Keďže naša nová premenná je premenná, čo sa stane ak skúsime rôzne hodnoty ?
+Po dosadení 1000 hodnot z intervalu $[0.01,10000]$ získavame prehľad o tom čo sa deje zo zvyšujúcim $\mu$.\\ Presnosť klasifikácie klesá a veľkosť $\Vec{u}$,$\Vec{v}$ narastá. Taktiež so zvyšujúcim $\mu$ klesá počet signifikantných premenných. Kedže $\mu$ a kardinalita a su lineárne závislé tak vieme vyvodiť a vypozorovať, že znižujúca kardinalita má negatívny dopad na presnosť a pozitívny dopad na $\phi(\mu)$(čo je opak toho čo chceme).
+\begin{figure}[h]%
+    \centering
+    \subfloat[\centering Kardinalita vs Presnosť]{{\includegraphics[width=6cm]{kar_acc.png} }}%
+    \qquad
+    \subfloat[\centering Kardinalita vs Phi($\mu$)]{{\includegraphics[width=6cm]{kar_phi.png} }}%
+    \caption{Vplyv Kardinality na rôzne metriky}%
+    \label{fig:kar}%
+\end{figure} 
+\begin{figure}[b]%
+    \centering
+    \subfloat[\centering $\mu$ vs Presnosť]{{\includegraphics[width=6cm]{mu_acc.png} }}%
+    \qquad
+    \subfloat[\centering $\mu$ vs $\phi$($\mu$)]{{\includegraphics[width=6cm]{mu_phi.png} }}%
+    \caption{Vplyv $\mu$ na rôzne metriky}%
+    \label{fig:mu}%
+\end{figure}
+\end{document}
+
 \end{document}
